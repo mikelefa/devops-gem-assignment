@@ -50,6 +50,8 @@ pipeline {
             $IMAGE_NAME
           """
 
+          sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME"
+
           // Wait for sim startup
           sleep 30
 
@@ -79,6 +81,7 @@ pipeline {
     always {
       container('docker') {
         sh "docker rm -f $CONTAINER_NAME || true"
+        sh 'docker image prune -f || true'
       }
     }
   }
