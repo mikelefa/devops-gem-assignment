@@ -50,8 +50,12 @@ pipeline {
             $IMAGE_NAME
           """
 
+          // Inspect if the container is running
           sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME"
-
+        
+          // Get container logs to ensure it ran properly
+          sh "docker logs $CONTAINER_NAME"
+        
           // Wait for sim startup
           sleep 30
 
