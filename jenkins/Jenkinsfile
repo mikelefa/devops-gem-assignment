@@ -8,7 +8,7 @@ pipeline {
 
   environment {
     IMAGE_NAME = 'ros_gem_sim'
-    CONTAINER_NAME = 'gem_test_container'
+    CONTAINER_NAME = 'gem_sim_container'
   }
 
   stages {
