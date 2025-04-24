@@ -87,6 +87,4 @@ CMD xvfb-run --auto-servernum --server-args='-screen 0 1400x900x24' bash -c "\
     roslaunch gem_gazebo gem_sensor_info.launch & \
     sleep 5 && \
     rosrun gem_pure_pursuit_sim pure_pursuit_sim.py & \
-    sleep 5 && \
-    python3 /ros_ws/src/POLARIS_GEM_e2/polaris_gem_drivers_sim/gem_pure_pursuit_sim/scripts/evaluate_cross_track_error.py && \
-    sleep 90"
+    sleep 5"
