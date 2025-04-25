@@ -44,6 +44,8 @@ pipeline {
 
             docker pull $IMAGE_NAME:$IMAGE_TAG || echo "No cached image found"
 
+            export DOCKER_BUILDKIT=1
+
             docker build --cache-from=$IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:$IMAGE_TAG -f docker/Dockerfile .
 
             docker push $IMAGE_NAME:$IMAGE_TAG
