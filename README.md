@@ -1,6 +1,6 @@
 # DevOps Automation for POLARIS GEM Simulator
 
-This repository demonstrates the end-to-end DevOps automation of the [POLARIS_GEM_e2 simulator](https://gitlab.engr.illinois.edu/gemillins/POLARIS_GEM_e2), as part of the Senior DevOps Automation Engineer assignment for SPRINT_GROUND.
+This repository demonstrates the end-to-end DevOps automation of the [POLARIS_GEM_e2 simulator](https://gitlab.engr.illinois.edu/gemillins/POLARIS_GEM_e2), as part of the Senior DevOps Automation Engineer assignment for TII.
 
 ## Repository Overview
 
