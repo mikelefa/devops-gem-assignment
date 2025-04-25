@@ -22,40 +22,30 @@ pipeline {
       }
     }
 
-    stage('Start Docker Daemon') {
-      steps {
-        container('docker') {
-          sh 'dockerd-entrypoint.sh &'
-          sh 'until docker info; do echo "Waiting for Docker..."; sleep 5; done'
-        }
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
         container('docker') {
-        withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-creds',
-            usernameVariable: 'DOCKER_USER',
-            passwordVariable: 'DOCKER_PASS'
-        )]) {
-            sh '''
-            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+          withCredentials([usernamePassword(
+              credentialsId: 'dockerhub-creds',
+              usernameVariable: 'DOCKER_USER',
+              passwordVariable: 'DOCKER_PASS'
+          )]) {
+              sh '''
+              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-            docker pull $IMAGE_NAME:$IMAGE_TAG || echo "No cached image found"
+              docker pull $IMAGE_NAME:$IMAGE_TAG || echo "No cached image found"
 
-            export DOCKER_BUILDKIT=1
+              export DOCKER_BUILDKIT=1
 
-            docker build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from=type=registry,ref=$IMAGE_NAME:$IMAGE_TAG \
-            --cache-to=type=inline \
-            -t $IMAGE_NAME:$IMAGE_TAG \
-            -f docker/Dockerfile .
+              docker build \
+              --build-arg BUILDKIT_INLINE_CACHE=1 \
+              --cache-from=type=registry,ref=$IMAGE_NAME:$IMAGE_TAG \
+              -t $IMAGE_NAME:$IMAGE_TAG \
+              -f docker/Dockerfile .
 
-            docker push $IMAGE_NAME:$IMAGE_TAG
-            '''
-        }
+              docker push $IMAGE_NAME:$IMAGE_TAG
+              '''
+          }
         }
       }
     }
