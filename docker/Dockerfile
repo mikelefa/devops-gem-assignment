@@ -50,7 +50,10 @@ RUN git clone https://gitlab.engr.illinois.edu/gemillins/POLARIS_GEM_e2.git
 RUN apt-get update && apt-get install -y \
     xvfb \
     libgl1-mesa-dev \
+    mesa-utils \
     libxrender1 \
+    libgl1-mesa-dri \
+    libgl1-mesa-glx \
     libxkbcommon-x11-0 \
     libxcb-xinerama0 \
     && rm -rf /var/lib/apt/lists/*
@@ -74,6 +77,9 @@ RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc
 #     export DISPLAY=:1
 RUN echo "DISPLAY is $DISPLAY" \
     which xvfb-run
+
+RUN Xvfb :1 -screen 0 1024x768x16 & \
+    export DISPLAY=:1
 
 ENV QT_QPA_PLATFORM=offscreen
 
