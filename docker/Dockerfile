@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     python3-pip \
     git \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # Add ROS package repository
@@ -76,15 +77,12 @@ RUN echo "DISPLAY is $DISPLAY" \
 
 ENV QT_QPA_PLATFORM=offscreen
 
-# CMD xvfb-run -a roslaunch gem_gazebo gem_gazebo_rviz.launch velodyne_points:=true gui:=false use_rviz:=false
-
-# Default command to run headless sim with evaluation
+# Default command to run headless sim with evaluation using tmux
 CMD xvfb-run --auto-servernum --server-args='-screen 0 1400x900x24' bash -c "\
     source /opt/ros/noetic/setup.bash && \
     source /ros_ws/devel/setup.bash && \
-    roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false & \
-    sleep 10 && \
-    roslaunch gem_gazebo gem_sensor_info.launch & \
-    sleep 5 && \
-    rosrun gem_pure_pursuit_sim pure_pursuit_sim.py & \
-    sleep 5"
+    tmux new-session -d -s ros_session \
+        'roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false' \; \
+    tmux new-window -t ros_session 'sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch' \; \
+    tmux new-window -t ros_session 'sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py' \; \
+    tmux attach-session -t ros_session"
