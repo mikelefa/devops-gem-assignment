@@ -70,6 +70,8 @@ pipeline {
             --env DISPLAY=:99 \
             --network host \
             --privileged \
+            --memory=4g \
+            --cpus=2 \ 
             ${IMAGE_NAME}
           """
 
@@ -100,11 +102,9 @@ pipeline {
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
             export DISPLAY=:99 && \
-            roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false
+            roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false &
           '
           '''
-
-          sh 'docker logs ${CONTAINER_NAME} || echo "No logs found"'
 
           sh '''
           docker exec ${CONTAINER_NAME} bash -c '
@@ -118,6 +118,8 @@ pipeline {
             echo 'Sim crashed' >> /tmp/pure_pursuit.log &
           "
           '''
+
+          sh 'docker logs ${CONTAINER_NAME} || echo "No logs found"'
 
           sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
           sh 'docker exec gem_sim_container bash -c "rosnode list"'
