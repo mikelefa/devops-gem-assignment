@@ -45,8 +45,10 @@ pipeline {
           sh """
           docker run -d --rm \
             --name $CONTAINER_NAME \
-            --env DISPLAY= \
+            --env LIBGL_ALWAYS_SOFTWARE=1 \
+            --env DISPLAY=:99 \
             --network host \
+            --privileged \
             $IMAGE_NAME
           """
 
@@ -59,11 +61,16 @@ pipeline {
           // Give the sim a moment to boot
           sleep 10
 
+          sh """
+          Xvfb :99 -screen 0 1280x1024x24 &
+            export DISPLAY=:99
+          """
+
           // Run evaluation script inside the container
           sh """
           docker exec $CONTAINER_NAME bash -c \
             'source /ros_ws/devel/setup.bash && \
-            python3 /ros_ws/src/POLARIS_GEM_e2/polaris_gem_drivers_sim/gem_pure_pursuit_sim/scripts/evaluate_cross_track_error.py'
+            rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py'
           """
         }
       }
