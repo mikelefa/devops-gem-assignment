@@ -112,10 +112,13 @@ pipeline {
           '
           '''
           sh '''
-          docker exec ${CONTAINER_NAME} bash -c "
-            sleep 5 && echo 'Starting sim...' >> /tmp/pure_pursuit.log && \
+          docker exec ${CONTAINER_NAME} bash -c '
+            source /opt/ros/noetic/setup.bash && \
+            source /ros_ws/devel/setup.bash && \
+            export DISPLAY=:99 && \
+            sleep 5 && echo "Starting sim..." >> /tmp/pure_pursuit.log && \
             rosrun gem_pure_pursuit_sim pure_pursuit_sim.py
-          "
+          '
           '''
 
           sh 'docker logs ${CONTAINER_NAME} || echo "No logs found"'
