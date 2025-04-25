@@ -66,7 +66,10 @@ COPY scripts/pure_pursuit_sim.py /ros_ws/src/POLARIS_GEM_e2/polaris_gem_drivers_
 SHELL ["/bin/bash", "-c"]
 
 # Source ROS, install dependencies, and build
-RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && rosdep install --from-paths src --ignore-src -r -y && catkin_make"
+RUN cd /ros_ws && \
+    source /opt/ros/noetic/setup.bash && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    catkin_make
 
 # Source workspace on container start
 RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc
