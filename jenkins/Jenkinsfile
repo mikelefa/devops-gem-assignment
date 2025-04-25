@@ -61,15 +61,15 @@ pipeline {
           sleep 10
 
           // Launch simulation using tmux inside container
-          sh """
-          docker exec $CONTAINER_NAME bash -c '
+          sh '''
+          docker exec $CONTAINER_NAME bash -c "
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
-            tmux new-session -d -s ros_session \
-              \\"roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false\\" \; \
-            tmux new-window -t ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \; \
-            tmux new-window -t ros_session \\"sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py\\"'
-          """
+            tmux new-session -d -s ros_session \\"roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false\\" \\; \
+            tmux new-window -t ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \\; \
+            tmux new-window -t ros_session \\"sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py\\"
+            "
+            '''
 
           // Run evaluation script inside the container
           sh """
