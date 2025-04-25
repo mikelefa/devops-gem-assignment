@@ -100,12 +100,20 @@ pipeline {
           // Optional: show active tmux sessions
           sh "docker exec ${CONTAINER_NAME} tmux ls || echo 'No tmux session running'"
 
-          // Wait before evaluation
-          sh 'sleep 15'
+          // Wait for cross_track_error topic to be published
+          sh '''
+          docker exec gem_sim_container bash -c '
+            source /ros_ws/devel/setup.bash && \
+            timeout 15 bash -c "until rostopic list | grep /cross_track_error; do echo Waiting for topic...; sleep 1; done"
+          '
+          '''
 
+          // Show the last few logs from the pure pursuit sim
+          sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
+  
           // Run evaluation script
           sh '''
-          docker exec ${CONTAINER_NAME} bash -c '
+          docker exec gem_sim_container bash -c '
             source /ros_ws/devel/setup.bash && \
             rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py
           '
