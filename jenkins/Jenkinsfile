@@ -71,8 +71,8 @@ pipeline {
             --network host \
             --privileged \
             --memory=4g \
-            --cpus=2
-            ${IMAGE_NAME}
+            --cpus=2 \
+            ${IMAGE_NAME}:${IMAGE_TAG}
           """
 
           // Wait until it's running
