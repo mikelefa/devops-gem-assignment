@@ -78,3 +78,7 @@ RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc \
     exec "$@"
 
 ENV QT_QPA_PLATFORM=offscreen
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["tail", "-f", "/dev/null"]

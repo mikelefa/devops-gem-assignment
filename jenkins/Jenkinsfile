@@ -42,7 +42,7 @@ pipeline {
       steps {
         container('docker') {
           sh """
-          docker run -d --rm \
+          docker run -d \
             --name $CONTAINER_NAME \
             --env LIBGL_ALWAYS_SOFTWARE=1 \
             --env DISPLAY=:99 \
@@ -61,7 +61,7 @@ pipeline {
           sleep 10
 
           // Launch simulation using tmux inside container
-          sh '''
+          sh """
           docker exec $CONTAINER_NAME bash -c "
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
@@ -69,7 +69,7 @@ pipeline {
             tmux new-window -t ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \\; \
             tmux new-window -t ros_session \\"sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py\\"
             "
-            '''
+            """
 
           // Run evaluation script inside the container
           sh """
