@@ -72,23 +72,9 @@ RUN source /opt/ros/noetic/setup.bash && \
     catkin_make
 
 # Source workspace on container start
-RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc
-# RUN Xvfb :1 -screen 0 1920x1080x24 & \
-#     export DISPLAY=:1
-RUN echo "DISPLAY is $DISPLAY" \
-    which xvfb-run
-
-RUN Xvfb :1 -screen 0 1024x768x16 & \
-    export DISPLAY=:1
+RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc \
+    Xvfb :99 -screen 0 1280x1024x24 & \
+    export DISPLAY=:99 \
+    exec "$@"
 
 ENV QT_QPA_PLATFORM=offscreen
-
-# Default command to run headless sim with evaluation using tmux
-CMD xvfb-run --auto-servernum --server-args='-screen 0 1400x900x24' bash -c "\
-    source /opt/ros/noetic/setup.bash && \
-    source /ros_ws/devel/setup.bash && \
-    tmux new-session -d -s ros_session \
-        'roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false' \; \
-    tmux new-window -t ros_session 'sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch' \; \
-    tmux new-window -t ros_session 'sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py' \; \
-    tmux attach-session -t ros_session"
