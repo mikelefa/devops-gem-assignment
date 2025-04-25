@@ -149,7 +149,7 @@ class PurePursuit(object):
             print("Crosstrack Error: " + str(ct_error))
 
             # implement constant pure pursuit controller
-            self.ackermann_msg.speed          = 15
+            self.ackermann_msg.speed          = 10
             self.ackermann_msg.steering_angle = angle
             self.ackermann_pub.publish(self.ackermann_msg)
             self.cte_pub.publish(ct_error)
