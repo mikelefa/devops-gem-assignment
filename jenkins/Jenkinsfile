@@ -72,7 +72,7 @@ pipeline {
             --privileged \
             --memory=4g \
             --cpus=2 \
-            ${IMAGE_NAME}:${IMAGE_TAG} bash -c "source /opt/ros/noetic/setup.bash"
+            ${IMAGE_NAME}:${IMAGE_TAG} bash -c "tail -f /dev/null"
           """
 
           // Wait until it's running
