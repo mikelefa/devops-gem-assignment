@@ -54,11 +54,7 @@ pipeline {
           sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME"
 
           // Stream logs in background
-          script {
-            def logCommand = "docker logs -f $CONTAINER_NAME"
-            def logJob = logCommand.execute()
-            logJob.consumeProcessOutput(System.out, System.err)
-          }
+          sh "docker logs -f $CONTAINER_NAME &"
 
           // Give the sim a moment to boot
           sleep 10
