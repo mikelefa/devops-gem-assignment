@@ -66,19 +66,15 @@ COPY scripts/pure_pursuit_sim.py /ros_ws/src/POLARIS_GEM_e2/polaris_gem_drivers_
 SHELL ["/bin/bash", "-c"]
 
 # Source ROS, install dependencies, and build
-WORKDIR /ros_ws
-RUN source /opt/ros/noetic/setup.bash && \
-    rosdep install --from-paths src --ignore-src -r -y && \
-    catkin_make
+RUN /bin/bash -c "source /opt/ros/noetic/setup.bash && rosdep install --from-paths src --ignore-src -r -y && catkin_make"
 
 # Source workspace on container start
-RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc \
-    Xvfb :99 -screen 0 1280x1024x24 & \
-    export DISPLAY=:99 \
-    exec "$@"
+RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc
 
-ENV QT_QPA_PLATFORM=offscreen
+# Copy entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Entry point to launch simulation
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["tail", "-f", "/dev/null"]

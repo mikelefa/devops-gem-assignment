@@ -24,8 +24,9 @@ pipeline {
     stage('Start Docker Daemon') {
       steps {
         container('docker') {
-          // Start Docker-in-Docker daemon
-          sh 'dockerd-entrypoint.sh & sleep 10'
+          sh 'dockerd-entrypoint.sh &'
+          // Wait for Docker to be ready
+          sh 'until docker info; do echo "Waiting for Docker..."; sleep 5; done'
         }
       }
     }
@@ -52,24 +53,20 @@ pipeline {
           """
 
           // Check if container is up
-          sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME"
+          sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME || docker logs $CONTAINER_NAME"
 
-          // Stream logs in background
-          sh "docker logs -f $CONTAINER_NAME &"
-
-          // Give the sim a moment to boot
-          sleep 10
+          // Stream logs (keep it synchronous)
+          sh "docker logs -f $CONTAINER_NAME"
 
           // Launch simulation using tmux inside container
           sh """
           docker exec $CONTAINER_NAME bash -c "
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
-            tmux new-session -d -s ros_session \\"roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false\\" \\; \
-            tmux new-window -t ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \\; \
+            tmux new-session -d -s ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \\; \
             tmux new-window -t ros_session \\"sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py\\"
             "
-            """
+          """
 
           // Run evaluation script inside the container
           sh """
@@ -79,7 +76,7 @@ pipeline {
           """
         }
       }
-}
+    }
   }
 
   post {
