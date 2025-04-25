@@ -48,7 +48,8 @@ pipeline {
 
             docker build \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from=$IMAGE_NAME:$IMAGE_TAG \
+            --cache-from=type=registry,ref=$IMAGE_NAME:$IMAGE_TAG \
+            --cache-to=type=inline \
             -t $IMAGE_NAME:$IMAGE_TAG \
             -f docker/Dockerfile .
 
