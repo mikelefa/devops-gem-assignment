@@ -109,9 +109,9 @@ pipeline {
 
           // Start pure_pursuit_sim.py in another tmux window
           sh '''
-          docker exec ${CONTAINER_NAME} bash -c '
-            tmux new-window -t ros_session "sleep 5 && echo 'Starting sim...' >> /tmp/pure_pursuit.log && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py >> /tmp/pure_pursuit.log 2>&1 || echo 'Sim crashed' >> /tmp/pure_pursuit.log"
-          '
+          docker exec ${CONTAINER_NAME} bash -c "
+            tmux new-window -t ros_session \\"sleep 5 && echo 'Starting sim...' >> /tmp/pure_pursuit.log && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py >> /tmp/pure_pursuit.log 2>&1 || echo 'Sim crashed' >> /tmp/pure_pursuit.log\\"
+          "
           '''
 
           sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
