@@ -7,8 +7,9 @@ pipeline {
   }
 
   environment {
-    IMAGE_NAME = 'ros_gem_sim'
     CONTAINER_NAME = 'gem_sim_container'
+    IMAGE_NAME = 'mikelefakadu/ros_gem_sim'
+    IMAGE_TAG = 'latest'
   }
 
   stages {
@@ -33,7 +34,21 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         container('docker') {
-          sh "docker build -t ${IMAGE_NAME} -f docker/Dockerfile ."
+        withCredentials([usernamePassword(
+            credentialsId: 'docker-hub-creds',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+            docker pull $IMAGE_NAME:$IMAGE_TAG || echo "No cached image found"
+
+            docker build --cache-from=$IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:$IMAGE_TAG -f docker/Dockerfile .
+
+            docker push $IMAGE_NAME:$IMAGE_TAG
+            '''
+        }
         }
       }
     }
@@ -93,9 +108,12 @@ pipeline {
           // Start pure_pursuit_sim.py in another tmux window
           sh '''
           docker exec ${CONTAINER_NAME} bash -c '
-            tmux new-window -t ros_session "sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py"
+            tmux new-window -t ros_session "sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py > /tmp/pure_pursuit.log 2>&1"
           '
           '''
+
+          sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
+          sh 'docker exec gem_sim_container bash -c "rosnode list"'
 
           // Optional: show active tmux sessions
           sh "docker exec ${CONTAINER_NAME} tmux ls || echo 'No tmux session running'"
