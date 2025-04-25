@@ -25,7 +25,6 @@ pipeline {
       steps {
         container('docker') {
           sh 'dockerd-entrypoint.sh &'
-          // Wait for Docker to be ready
           sh 'until docker info; do echo "Waiting for Docker..."; sleep 5; done'
         }
       }
@@ -42,6 +41,7 @@ pipeline {
     stage('Run Simulation + Evaluation') {
       steps {
         container('docker') {
+          // Start container detached
           sh """
           docker run -d \
             --name $CONTAINER_NAME \
@@ -52,27 +52,41 @@ pipeline {
             $IMAGE_NAME
           """
 
-          // Check if container is up
-          sh "docker inspect --format '{{.State.Status}}' $CONTAINER_NAME || docker logs $CONTAINER_NAME"
-
-          // Stream logs (keep it synchronous)
-          sh "docker logs -f $CONTAINER_NAME"
-
-          // Launch simulation using tmux inside container
+          // Wait for container to be fully up
           sh """
-          docker exec $CONTAINER_NAME bash -c "
-            source /opt/ros/noetic/setup.bash && \
-            source /ros_ws/devel/setup.bash && \
-            tmux new-session -d -s ros_session \\"sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch\\" \\; \
-            tmux new-window -t ros_session \\"sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py\\"
-            "
+          for i in {1..10}; do
+            STATUS=$(docker inspect --format '{{.State.Status}}' $CONTAINER_NAME || echo 'exited')
+            if [ "\$STATUS" = "running" ]; then
+              echo "Container is running."
+              break
+            fi
+            echo "Waiting for container... (\$i)"
+            sleep 3
+          done
           """
 
-          // Run evaluation script inside the container
+          // Launch simulation via tmux inside container
+          sh """
+          docker exec $CONTAINER_NAME bash -c '
+            source /opt/ros/noetic/setup.bash && \
+            source /ros_ws/devel/setup.bash && \
+            Xvfb :99 -screen 0 1280x1024x24 & \
+            export DISPLAY=:99 && \
+            tmux new-session -d -s ros_session "roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false" && \
+            tmux new-window -t ros_session "sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch" && \
+            tmux new-window -t ros_session "sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py"
+          '
+          """
+
+          // Wait before evaluation
+          sh 'sleep 15'
+
+          // Run evaluation script
           sh """
           docker exec $CONTAINER_NAME bash -c '
             source /ros_ws/devel/setup.bash && \
-            rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py'
+            rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py
+          '
           """
         }
       }
@@ -95,7 +109,7 @@ pipeline {
     always {
       container('docker') {
         sh "docker rm -f $CONTAINER_NAME || true"
-        sh 'docker image prune -f || true'
+        sh "docker image prune -f || true"
       }
     }
   }

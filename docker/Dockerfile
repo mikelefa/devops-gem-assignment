@@ -75,6 +75,8 @@ RUN echo "source /ros_ws/devel/setup.bash" >> ~/.bashrc
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Entry point to launch simulation
-ENTRYPOINT ["/entrypoint.sh"]
+# Set environment
+ENV QT_QPA_PLATFORM=offscreen
+ENV DISPLAY=:99
+
 CMD ["tail", "-f", "/dev/null"]
