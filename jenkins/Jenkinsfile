@@ -100,9 +100,11 @@ pipeline {
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
             export DISPLAY=:99 && \
-            roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false &
+            roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false
           '
           '''
+
+          sh 'docker logs ${CONTAINER_NAME} || echo "No logs found"'
 
           sh '''
           docker exec ${CONTAINER_NAME} bash -c '
