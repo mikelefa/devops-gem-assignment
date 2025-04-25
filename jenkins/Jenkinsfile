@@ -41,18 +41,18 @@ pipeline {
     stage('Run Simulation + Evaluation') {
       steps {
         container('docker') {
-          // Start container detached
-          sh '''
+          // Start container
+          sh """
           docker run -d \
-            --name gem_sim_container \
+            --name ${CONTAINER_NAME} \
             --env LIBGL_ALWAYS_SOFTWARE=1 \
             --env DISPLAY=:99 \
             --network host \
             --privileged \
-            ros_gem_sim
-          '''
+            ${IMAGE_NAME}
+          """
 
-          // Wait for container to be fully up
+          // Wait until it's running
           sh '''
           for i in {1..10}; do
             STATUS=$(docker inspect --format '{{.State.Status}}' gem_sim_container || echo 'exited')
@@ -65,25 +65,47 @@ pipeline {
           done
           '''
 
-          // Launch simulation via tmux inside container
+          // Start Xvfb first
           sh '''
-          docker exec gem_sim_container bash -c '
+          docker exec ${CONTAINER_NAME} bash -c '
+            Xvfb :99 -screen 0 1280x1024x24 &
+            sleep 2
+          '
+          '''
+
+          // Start roslaunch in a new tmux session
+          sh '''
+          docker exec ${CONTAINER_NAME} bash -c '
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
-            Xvfb :99 -screen 0 1280x1024x24 & \
             export DISPLAY=:99 && \
-            tmux new-session -d -s ros_session "roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false" && \
-            tmux new-window -t ros_session "sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch" && \
+            tmux new-session -d -s ros_session "roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false"
+          '
+          '''
+
+          // Start gem_sensor_info in a new tmux window
+          sh '''
+          docker exec ${CONTAINER_NAME} bash -c '
+            tmux new-window -t ros_session "sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch"
+          '
+          '''
+
+          // Start pure_pursuit_sim.py in another tmux window
+          sh '''
+          docker exec ${CONTAINER_NAME} bash -c '
             tmux new-window -t ros_session "sleep 5 && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py"
           '
           '''
+
+          // Optional: show active tmux sessions
+          sh "docker exec ${CONTAINER_NAME} tmux ls || echo 'No tmux session running'"
 
           // Wait before evaluation
           sh 'sleep 15'
 
           // Run evaluation script
           sh '''
-          docker exec gem_sim_container bash -c '
+          docker exec ${CONTAINER_NAME} bash -c '
             source /ros_ws/devel/setup.bash && \
             rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py
           '
