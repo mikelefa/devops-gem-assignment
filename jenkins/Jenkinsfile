@@ -94,35 +94,31 @@ pipeline {
           '
           '''
 
-          // Start roslaunch in a new tmux session
+          // Start roslaunch in background
           sh '''
           docker exec ${CONTAINER_NAME} bash -c '
             source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
             export DISPLAY=:99 && \
-            tmux new-session -d -s ros_session "roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false"
+            roslaunch gem_gazebo gem_gazebo_rviz.launch gui:=false use_rviz:=false &
           '
           '''
 
-          // Start gem_sensor_info in a new tmux window
           sh '''
           docker exec ${CONTAINER_NAME} bash -c '
-            tmux new-window -t ros_session "sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch"
+            sleep 10 && roslaunch gem_gazebo gem_sensor_info.launch &
           '
           '''
-
-          // Start pure_pursuit_sim.py in another tmux window
           sh '''
           docker exec ${CONTAINER_NAME} bash -c "
-            tmux new-window -t ros_session \\"sleep 5 && echo 'Starting sim...' >> /tmp/pure_pursuit.log && rosrun gem_pure_pursuit_sim pure_pursuit_sim.py >> /tmp/pure_pursuit.log 2>&1 || echo 'Sim crashed' >> /tmp/pure_pursuit.log\\"
+            sleep 5 && echo 'Starting sim...' >> /tmp/pure_pursuit.log && \
+            rosrun gem_pure_pursuit_sim pure_pursuit_sim.py >> /tmp/pure_pursuit.log 2>&1 || \
+            echo 'Sim crashed' >> /tmp/pure_pursuit.log &
           "
           '''
 
           sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
           sh 'docker exec gem_sim_container bash -c "rosnode list"'
-
-          // Optional: show active tmux sessions
-          sh "docker exec ${CONTAINER_NAME} tmux ls || echo 'No tmux session running'"
 
           // Wait for cross_track_error topic to be published
           sh '''

@@ -1,3 +1,5 @@
+ARG BUILDKIT_INLINE_CACHE=1
+
 # Use Ubuntu 20.04 as base image
 FROM ubuntu:20.04
 
