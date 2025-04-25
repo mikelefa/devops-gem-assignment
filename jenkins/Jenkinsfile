@@ -117,30 +117,17 @@ pipeline {
             source /ros_ws/devel/setup.bash && \
             export DISPLAY=:99 && \
             sleep 5 && echo "Starting sim..." >> /tmp/pure_pursuit.log && \
-            rosrun gem_pure_pursuit_sim pure_pursuit_sim.py
+            rosrun gem_pure_pursuit_sim pure_pursuit_sim.py &
           '
           '''
-
-          sh 'docker logs ${CONTAINER_NAME} || echo "No logs found"'
-
-          sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
-          sh 'docker exec gem_sim_container bash -c "rosnode list"'
-
-          // Wait for cross_track_error topic to be published
-          sh '''
-          docker exec gem_sim_container bash -c '
-            source /ros_ws/devel/setup.bash && \
-            timeout 15 bash -c "until rostopic list | grep /cross_track_error; do echo Waiting for topic...; sleep 1; done"
-          '
-          '''
-
-          // Show the last few logs from the pure pursuit sim
-          sh 'docker exec gem_sim_container bash -c "tail -n 30 /tmp/pure_pursuit.log || echo \'No sim log found\'"'
   
           // Run evaluation script
           sh '''
           docker exec gem_sim_container bash -c '
+            source /opt/ros/noetic/setup.bash && \
             source /ros_ws/devel/setup.bash && \
+            export DISPLAY=:99 && \
+            sleep 5 && \
             rosrun gem_pure_pursuit_sim evaluate_cross_track_error.py
           '
           '''
