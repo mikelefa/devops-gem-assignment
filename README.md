@@ -85,6 +85,7 @@ roslaunch gem_gazebo gem_sensor_info.launch
 # Run the pure pursuit algorithm
 rosrun gem_pure_pursuit_sim pure_pursuit_sim.py
 ```
+> **Note**: Run each command on a seperate terminal or as a seperate process.
 
 ## 6. Evaluation Script
 
